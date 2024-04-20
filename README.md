@@ -5,31 +5,31 @@
 
 Load module sources
 
-1. sudo dkms ldtarball membuf.tar.gz
+1. ``` sudo dkms ldtarball membuf.tar.gz ```
 
 Check that module loaded
 
-2. sudo dkms status
+2. ``` sudo dkms status ```
 
 Build module
 
-3. sudo dkms build -m membuf -v 0.1
+3. ``` sudo dkms build -m membuf -v 0.1 ```
 
 Install module
 
-4. sudo dkms install -m membuf -v 0.1
+4. ``` sudo dkms install -m membuf -v 0.1 ```
 
 Load module into kernel
 
-5. sudo modprobe membuf
+5. ``` sudo modprobe membuf ```
 
 Check that module was successfully loaded 
 
-6. sudo lsmod
+6. ``` sudo lsmod ```
 
 To unload module
 
-7. sudo modprobe -r membuf
+7. ``` sudo modprobe -r membuf ```
 
 
 

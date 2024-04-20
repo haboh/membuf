@@ -1,9 +1,10 @@
 # membuf
 
-
 ### DKMS INSTALLATION
 
-1. Load module sources: ``` sudo dkms ldtarball membuf.tar.gz ```
+0. Download latest release
+
+1. Load module sources: ``` sudo dkms ldtarball membuf-0.1.tar.gz ```
 
 2. Check that module loaded: ``` sudo dkms status ```
 
@@ -18,7 +19,7 @@
 7. To unload module: ``` sudo modprobe -r membuf ```
 
 
-#### DIRECT INSTALLATION
+### DIRECT INSTALLATION
 
 1. To build: ```make```
 

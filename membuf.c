@@ -12,8 +12,8 @@
 #include <linux/cdev.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("maxim");
-MODULE_DESCRIPTION("none");
+MODULE_AUTHOR("Maxim Khabarov");
+MODULE_DESCRIPTION("Character device with in-memory fixed-size buffer.");
 MODULE_VERSION("0.1");
 
 static ssize_t buf_size_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
@@ -22,72 +22,92 @@ static ssize_t buf_size_store(struct kobject *kobj, struct kobj_attribute *attr,
 
 #define BUF_SIZE_DEFAULT (4096)
 
-static int buf_size = BUF_SIZE_DEFAULT;
+static int buf_size = 0;
 static char *buffer = NULL;
 static struct kobject *membuf_kobject;
 static struct kobj_attribute foo_attribute = __ATTR(buf_size, 0660, buf_size_show, buf_size_store);
 
 // TODO: change with rw-version
-DEFINE_MUTEX(buffer_lock);
+DECLARE_RWSEM(buffer_rw_sem);
 
 module_param(buf_size, int, 0660);
 
-static void reallocate_buffer(void)
+static bool reallocate_buffer(int new_buf_size)
 {
-        kfree(buffer);
-        buffer = (char *)kmalloc(buf_size, GFP_KERNEL);
-        if (buffer == NULL)
+	char* new_buffer = (char *)kmalloc(new_buf_size, GFP_KERNEL);
+        if (new_buffer == NULL)
         {
-                panic("kmalloc returned an error\n");
+                return false;
         }
-        memset(buffer, 0, buf_size);
+        memset(new_buffer, 0, new_buf_size);
+        
+	size_t copy_size = min(new_buf_size, buf_size);
+	memcpy(new_buffer, buffer, copy_size);	
+	
+	kfree(buffer);
+	buf_size = new_buf_size;
+	buffer = new_buffer;
+	
+	return true;
 }
 
 static ssize_t buf_size_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-        mutex_lock(&buffer_lock);
+        down_read(&buffer_rw_sem);
         ssize_t result;
         result = sprintf(buf, "%d\n", buf_size);
-        mutex_unlock(&buffer_lock);
+        up_read(&buffer_rw_sem);
         return result;
 }
 
 static ssize_t buf_size_store(struct kobject *kobj, struct kobj_attribute *attr,
                               const char *buf, size_t count)
 {
-        mutex_lock(&buffer_lock);
+        down_write(&buffer_rw_sem);
         ssize_t result = count;
-        if (sscanf(buf, "%d", &buf_size) != 1)
+	int new_buf_size;
+        if (sscanf(buf, "%d", &new_buf_size) != 1)
         {
                 result = 0;
                 goto finish;
         }
-        if (buf_size < 0)
+        if (new_buf_size < 0)
         {
                 result = 0;
-                buf_size = BUF_SIZE_DEFAULT;
-                reallocate_buffer();
+                if (!reallocate_buffer(BUF_SIZE_DEFAULT)) {
+                	result = -ENOMEM;
+                }
                 goto finish;
         }
 
-        reallocate_buffer();
+        if (!reallocate_buffer(new_buf_size))
+        {
+        	result = -ENOMEM;
+        	goto finish;
+        }
 finish:
-        mutex_unlock(&buffer_lock);
+        up_write(&buffer_rw_sem);
         return result;
 }
 
 static ssize_t membuf_read(struct file *file, char __user *buf, size_t len, loff_t *off)
 {
-        mutex_lock(&buffer_lock);
+        down_read(&buffer_rw_sem);
         ssize_t res;
 
-        if (*off >= buf_size) 
+	if (*off == buf_size)
+	{
+		res = 0;
+		goto finish;
+	}
+
+        if (*off > buf_size) 
         {
-                res = -EFAULT;
+                res = -ESPIPE;
                 goto finish;
         }
 
-        size_t count_bytes_to_copy =  (buf_size - *off) < len ? (buf_size - *off) : len;
+        size_t count_bytes_to_copy = min((size_t)(buf_size - *off), len);
         if (copy_to_user(buf, buffer + *off, count_bytes_to_copy) != 0)
         {
                 res = -EFAULT;
@@ -98,23 +118,28 @@ static ssize_t membuf_read(struct file *file, char __user *buf, size_t len, loff
         res = count_bytes_to_copy;
 
 finish:
-        mutex_unlock(&buffer_lock);
+        up_read(&buffer_rw_sem);
         return res;
 }
 
 static ssize_t membuf_write(struct file *file, const char __user *buf, size_t len, loff_t *off)
 {
-        mutex_lock(&buffer_lock);
+        down_write(&buffer_rw_sem);
         ssize_t res;
 
-        if (*off >= buf_size)
+	if (*off == buf_size)
+	{
+		res = 0;
+		goto finish;
+	}
+
+        if (*off > buf_size)
         {
-                res = -EFAULT;
+                res = -ENOSPC;
                 goto finish;
         }
-
         
-        size_t count_bytes_to_copy =  (buf_size - *off) < len ? (buf_size - *off) : len;
+        size_t count_bytes_to_copy = min((size_t)(buf_size - *off), len);
 
         if (copy_from_user(buffer + *off, buf, count_bytes_to_copy) != 0)
         {
@@ -126,7 +151,7 @@ static ssize_t membuf_write(struct file *file, const char __user *buf, size_t le
         res = count_bytes_to_copy;
 
 finish:
-        mutex_unlock(&buffer_lock);
+        up_write(&buffer_rw_sem);
         return res;
 }
 
@@ -160,7 +185,12 @@ static int __init mymodule_init(void)
                 goto finish;
         }
 
-        reallocate_buffer();
+        if (!reallocate_buffer(BUF_SIZE_DEFAULT))
+        {
+        	pr_debug("failed to allocate buffer in kernel memory \n");
+        	error = -ENOMEM;
+                goto finish;
+	}
 
         // creating symbol device
         if ((error = alloc_chrdev_region(&dev, 0, 1, "membuf")) < 0)

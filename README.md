@@ -32,30 +32,17 @@ To unload module
 7. ``` sudo modprobe -r membuf ```
 
 
-
 #### DIRECT INSTALLATION
 
-1. To build:
+1. To build: ```make```
 
-```
-make
-```
+2. To install: ```sudo insmod membuf.ko [buf_size=n]```
 
-2. To install:
-
-```
-sudo insmod membuf.ko [buf_size=n]
-```
-
-3. To uninstall:
-
-```
-sudo rmmod membuf
-```
+3. To uninstall: ```sudo rmmod membuf```
 
 
 ### Usage
 
-`/dev/membuf_device` --- character device for read / writing
+`/dev/membuf_device` &mdash; character device for read / writing
 
-`/sys/kernel/kobject_membuf/buf_size` --- sysfs file for changing buffer size
+`/sys/kernel/kobject_membuf/buf_size` &mdash; sysfs file for changing buffer size

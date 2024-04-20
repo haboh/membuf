@@ -3,33 +3,19 @@
 
 ### DKMS INSTALLATION
 
-Load module sources
+1. Load module sources: ``` sudo dkms ldtarball membuf.tar.gz ```
 
-1. ``` sudo dkms ldtarball membuf.tar.gz ```
+2. Check that module loaded: ``` sudo dkms status ```
 
-Check that module loaded
+3. Build module: ``` sudo dkms build -m membuf -v 0.1 ```
 
-2. ``` sudo dkms status ```
+4. Install module: ``` sudo dkms install -m membuf -v 0.1 ```
 
-Build module
+5. Load module into kernel: ``` sudo modprobe membuf ```
 
-3. ``` sudo dkms build -m membuf -v 0.1 ```
+6. Check that module was successfully loaded: ``` sudo lsmod ```
 
-Install module
-
-4. ``` sudo dkms install -m membuf -v 0.1 ```
-
-Load module into kernel
-
-5. ``` sudo modprobe membuf ```
-
-Check that module was successfully loaded 
-
-6. ``` sudo lsmod ```
-
-To unload module
-
-7. ``` sudo modprobe -r membuf ```
+7. To unload module: ``` sudo modprobe -r membuf ```
 
 
 #### DIRECT INSTALLATION

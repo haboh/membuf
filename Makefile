@@ -1,10 +1,10 @@
-CONFIG_MODULE_SIG=n
-CONFIG_MODULE_SIG_ALL=n
-
-obj-m += membuf.o
+MOD = membuf
+KPATH :=/lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+obj-m = $(MOD).o
 
 all:
-	make -C /usr/src/kernels/6.5.6-300.fc39.x86_64 M=$(PWD) modules
+	$(MAKE) -C $(KPATH) M=$(PWD) modules
 
 clean:
-	make -C /usr/src/kernels/6.5.6-300.fc39.x86_64 M=$(PWD) clean
+	$(MAKE) -C $(KPATH) M=$(PWD) clean

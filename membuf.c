@@ -212,9 +212,9 @@ static int __init mymodule_init(void)
                 goto cdev_del;
         }
 
-        if (IS_ERR(device_create(membuf_class, NULL, dev, NULL, "membuf_device")))
+        if (IS_ERR(device_create(membuf_class, NULL, dev, NULL, "membuf")))
         {
-                pr_err("membuf: error creating device\n");
+                pr_err("membuf: error creating \n");
                 error = -1;
                 goto class_destroy;
         }

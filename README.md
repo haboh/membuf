@@ -30,6 +30,6 @@
 
 ### Usage
 
-`/dev/membuf_device` &mdash; character device for read / writing
+`/dev/membuf` &mdash; character device for read / writing
 
 `/sys/kernel/membuf/buf_size` &mdash; sysfs file for changing buffer size

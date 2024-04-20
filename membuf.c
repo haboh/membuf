@@ -27,7 +27,6 @@ static char *buffer = NULL;
 static struct kobject *membuf_kobject;
 static struct kobj_attribute foo_attribute = __ATTR(buf_size, 0660, buf_size_show, buf_size_store);
 
-// TODO: change with rw-version
 DECLARE_RWSEM(buffer_rw_sem);
 
 module_param(buf_size, int, 0660);
@@ -171,7 +170,7 @@ static int __init mymodule_init(void)
         int error = 0;
 
         // create kobject with buf_size
-        membuf_kobject = kobject_create_and_add("kobject_membuf", kernel_kobj);
+        membuf_kobject = kobject_create_and_add("membuf", kernel_kobj);
         if (!membuf_kobject)
         {
                 error = -ENOMEM;

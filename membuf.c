@@ -184,13 +184,13 @@ static int __init mymodule_init(void)
                 goto finish;
         }
 
-        if (!reallocate_buffer(BUF_SIZE_DEFAULT))
+        if (!reallocate_buffer(buf_size == 0 ? BUF_SIZE_DEFAULT : buf_size))
         {
         	pr_debug("failed to allocate buffer in kernel memory \n");
         	error = -ENOMEM;
                 goto finish;
 	}
-
+	
         // creating symbol device
         if ((error = alloc_chrdev_region(&dev, 0, 1, "membuf")) < 0)
         {

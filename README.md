@@ -1,6 +1,6 @@
 # membuf
 
-### DKMS INSTALLATION
+### DKMS installation
 
 0. Download latest release
 
@@ -19,7 +19,7 @@
 7. To unload module: ``` sudo modprobe -r membuf ```
 
 
-### DIRECT INSTALLATION
+### Direct installation
 
 1. To build: ```make```
 
